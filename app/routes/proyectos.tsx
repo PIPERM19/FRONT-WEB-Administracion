@@ -76,8 +76,8 @@ export default function Proyectos() {
       await createProject({
         name: newProjectName,
         description: newProjectDesc,
-        client_id: 2,           // Estático según requerimiento
-        team_leader_id: userId, // Usuario actual
+        client_id: 2,           // Estático según requerimiento hasta que se agregue gestión de clientes
+        team_leader_id: userId, // Usuario actual hasta que se agregue gestión de usuarios
         start: new Date(startDate).toISOString(),
         end: new Date(endDate).toISOString(), 
       });
