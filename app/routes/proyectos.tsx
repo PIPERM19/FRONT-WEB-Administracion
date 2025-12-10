@@ -6,7 +6,8 @@ import {
   getProjects, 
   createProject, 
   getProjectModules, 
-  createTask 
+  createTask,
+  removeProyect
 } from "../services/projectService";
 import type { Project, Module } from "../types/projects";
 
@@ -20,6 +21,7 @@ export default function Proyectos() {
   // MODALES (CREAR PROYECTO / TAREA)
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
 
   // FORMULARIOS PROYECTO
   const [newProjectName, setNewProjectName] = useState("");
@@ -32,6 +34,7 @@ export default function Proyectos() {
   const [taskDesc, setTaskDesc] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<string>("");
   const [availableModules, setAvailableModules] = useState<Module[]>([]);
 
   // CARGAR PROYECTOS AL INICIAR
@@ -122,6 +125,24 @@ export default function Proyectos() {
     }
   };
 
+  // ELIMINAR PROYECTO
+  const handleDeleteProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectToDelete) {
+      alert("Selecciona un proyecto para eliminar");
+      return;
+    }
+    try {
+      await removeProyect(projectToDelete);
+      setShowDeleteProjectModal(false);
+      loadProjects();
+      alert("Proyecto eliminado con éxito");
+    } catch (error) {
+      alert("Error al eliminar el proyecto");
+      console.error("Error eliminando proyecto", error);
+    }
+  };
+
   // Función para formatear fechas
   const formatDate = (dateString: string) => {
     if (!dateString) return "Pendiente";
@@ -132,8 +153,7 @@ export default function Proyectos() {
   
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // Permisos de edición (rol 0 y 1)
-  const canEdit = role === "0" || role === "1";
+   const canEdit = role === "0" || role === "1";
 
   return (
     <MainLayout contentClassName="flex flex-col gap-10 relative">
@@ -175,9 +195,19 @@ export default function Proyectos() {
                     setShowActionsMenu(false);
                     setShowTaskModal(true);
                   }}
-                  className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-neutral-100"
+                  className="w-full border-b-2 border-black px-4 py-3 text-left text-sm font-medium hover:bg-neutral-100"
                 >
                   Añadir tarea a proyecto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowActionsMenu(false);
+                    setShowDeleteProjectModal(true);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-neutral-100 text-red-600"
+                >
+                  Eliminar proyecto
                 </button>
               </div>
             )}
@@ -291,6 +321,29 @@ export default function Proyectos() {
             <div className="flex gap-4">
               <button type="button" onClick={() => setShowTaskModal(false)} className="flex-1 border-2 border-black py-3 font-bold hover:bg-neutral-200">CANCELAR</button>
               <button type="submit" className="flex-1 border-2 border-black bg-black py-3 text-white font-bold hover:bg-white hover:text-black">GUARDAR</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR PROYECTO */}
+      {showDeleteProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <form onSubmit={handleDeleteProject} className="w-full max-w-lg border-4 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="mb-2 text-2xl font-bold uppercase text-red-600">Eliminar Proyecto</h2>
+            <p className="text-neutral-600 mb-6">Esta acción es irreversible. Se eliminará el proyecto y toda la información asociada.</p>
+            
+            <div className="mb-6">
+              <label className="block font-bold mb-2">Proyecto a eliminar</label>
+              <select className="w-full border-2 border-black p-3 bg-white" value={projectToDelete} onChange={(e) => setProjectToDelete(e.target.value)} required>
+                <option value="">-- Selecciona un proyecto --</option>
+                {projects.map(p => (<option key={p.id} value={p.id}>{p.name} (ID: {p.id})</option>))}
+              </select>
+            </div>
+
+            <div className="flex gap-4">
+              <button type="button" onClick={() => setShowDeleteProjectModal(false)} className="flex-1 border-2 border-black py-3 font-bold hover:bg-neutral-200">CANCELAR</button>
+              <button type="submit" className="flex-1 border-2 border-red-600 bg-red-600 py-3 text-white font-bold hover:bg-white hover:text-red-600">ELIMINAR</button>
             </div>
           </form>
         </div>

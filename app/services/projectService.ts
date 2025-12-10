@@ -44,6 +44,10 @@ export async function getProjects(): Promise<Project[]> {
   return data.projects;
 }
 
+export async function removeProyect(projectId: string): Promise<ApiMessageResponse> {
+  return fetchAuthenticated("project/remove", "POST", { project_id: projectId });
+}
+
 export async function createProject(data: CreateProjectBody): Promise<string> {
   const res: CreateProjectResponse = await fetchAuthenticated("project", "POST", data);
   return res.projectID;
