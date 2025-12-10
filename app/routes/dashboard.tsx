@@ -9,20 +9,6 @@ import {
 } from "../services/projectService";
 import type { Project, Module } from "../types/projects";
 
-// ENLACES RÁPIDOS Y MENSAJES DE EJEMPLO
-const quickLinks = [
-  { to: "/proyectos", label: "Proyectos" },
-  { to: "/equipos", label: "Equipos" },
-  { to: "/chat", label: "Chat" },
-  { to: "/configuracion", label: "Configuración" },
-];
-
-const recentMessages = [
-  { name: "Juan Pérez", preview: "¿Podemos revisar el diseño mañana?", time: "Hace 10 min" },
-  { name: "María García", preview: "El API está listo para pruebas", time: "Hace 1 hora" },
-  { name: "Carlos López", preview: "Nuevas mockups disponibles", time: "Hace 3 horas" },
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
   
@@ -153,18 +139,7 @@ export default function Dashboard() {
   return (
     <MainLayout fullWidth contentClassName="flex flex-col gap-10 relative">
       
-      {/* LINKS RÁPIDOS */}
-      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {quickLinks.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className="flex min-h-[120px] items-center justify-center border-2 border-black bg-white text-center text-xl font-semibold transition-transform hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </section>
+      {/* SE ELIMINO LINKS RÁPIDOS */}
 
       {/* ACCIONES DE ADMIN */}
       {(role === "0" || role === "1") && (
@@ -190,7 +165,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* MENU Principal */}
+      {/* MENU Principal (se quito la columna de mensajes) */}
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="border-2 border-black bg-white p-8">
           <div className="flex justify-between items-center mb-6">
@@ -221,23 +196,6 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
-        <div className="border-2 border-black bg-white p-8 h-fit">
-          <h2 className="mb-6 text-2xl font-semibold">Mensajes Recientes</h2>
-          <div className="flex flex-col gap-4">
-            {recentMessages.map((message) => (
-              <div key={message.name} className="border-b-2 border-black pb-4 last:border-0">
-                <div className="flex justify-between items-baseline mb-1">
-                    <div className="text-sm font-bold">{message.name}</div>
-                    <span className="text-[10px] uppercase font-bold text-neutral-500">{message.time}</span>
-                </div>
-                <p className="text-sm text-neutral-700 truncate">{message.preview}</p>
-              </div>
-            ))}
-            <Link to="/chat" className="mt-4 w-full border-2 border-black bg-white py-3 text-center text-sm font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors">
-              Ir al Chat
-            </Link>
-          </div>
         </div>
       </section>
 
