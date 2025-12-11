@@ -84,3 +84,10 @@ export interface GetModulesResponse {
 export interface GetTasksResponse {
   tasks: Task[];
 }
+
+export interface Member {
+  name: string;
+  role: string;
+  email: string;
+  isLeader?: boolean; // Es opcional, por eso tiene el ?
+}

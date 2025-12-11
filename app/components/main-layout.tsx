@@ -2,6 +2,9 @@ import { Link, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
+// Definición del color de borde y título (Estilo Fácil)
+const CUSTOM_BLUE = "#061B2E";
+
 const navLinks = [
   { to: "/proyectos", label: "Proyectos" },
   { to: "/equipos", label: "Equipos" },
@@ -16,6 +19,7 @@ type MainLayoutProps = {
 
 function getLinkClasses(isActive: boolean) {
   const base = "transition-colors";
+  // Mantengo los colores de texto y hover del layout original para los enlaces
   return isActive ? `${base} font-semibold` : `${base} text-neutral-600 hover:text-black`;
 }
 
@@ -71,9 +75,18 @@ export function MainLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
-      <header className="border-b-2 border-black bg-white">
+      {/* HEADER MODIFICADO: Borde azul (#061B2E), redondeado en la base y sombra */}
+      <header 
+          className="border-b-2 bg-white rounded-b-xl shadow-lg" 
+          style={{ borderColor: CUSTOM_BLUE }} // Aplica el color del borde azul
+      >
         <nav className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-6">
-          <Link to="/dashboard" className="text-2xl font-bold tracking-tight">
+          {/* Logo/Título con color azul */}
+          <Link 
+            to="/dashboard" 
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: CUSTOM_BLUE }} // Color del texto del título
+          >
             PMaster
           </Link>
           <div className="flex items-center gap-8">
@@ -118,4 +131,3 @@ export function MainLayout({
     </div>
   );
 }
-
