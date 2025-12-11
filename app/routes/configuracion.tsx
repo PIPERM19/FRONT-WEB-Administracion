@@ -1,5 +1,13 @@
-import { MainLayout } from "../components/main-layout";
+// routes/configuracion.tsx (Código final con la integración de la API)
 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { MainLayout } from "../components/main-layout";
+// IMPORTACIÓN ACTUALIZADA: Usar authService.ts
+import { getProfile } from "../services/authService"; 
+import type { UserProfileResponse } from "../types/user"; 
+
+// Datos de configuración estáticos
 const departamentos = ["Desarrollo", "Diseño", "Marketing", "Producto", "Operaciones"];
 const idiomas = ["Español", "English", "Français", "Deutsch"];
 const zonasHorarias = [
@@ -11,7 +19,81 @@ const zonasHorarias = [
 const formatosFecha = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"];
 const temas = ["Oscuro", "Claro", "Automático"];
 
+// Función para mapear el rol numérico a un departamento o puesto
+const getDepartmentByRole = (role: number) => {
+    switch (role) {
+        case 0: // Admin
+        case 1: // Team Leader
+            return { puesto: "Líder de Proyecto", departamento: departamentos[0] };
+        case 2: // Miembro
+        default:
+            return { puesto: "Miembro de Equipo", departamento: departamentos[1] };
+    }
+}
+
 export default function Configuracion() {
+  const navigate = useNavigate();
+
+  // ESTADOS PARA DATOS DEL USUARIO
+  const [name, setName] = useState("Cargando...");
+  const [email, setEmail] = useState("Cargando...");
+  const [puesto, setPuesto] = useState("Cargando...");
+  const [departamento, setDepartamento] = useState(departamentos[0]);
+  const [phone, setPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // LÓGICA DE CARGA DE PERFIL (USANDO LA API REAL)
+  useEffect(() => {
+    const loadProfile = async () => {
+        try {
+            const profileData: UserProfileResponse = await getProfile();
+            
+            // Mapear el rol a valores de Puesto/Departamento
+            const { puesto: mappedPuesto, departamento: mappedDepartamento } = getDepartmentByRole(profileData.role);
+
+            // Setear los estados con datos reales de la API
+            setName(profileData.name);
+            setEmail(profileData.email);
+            setPhone(profileData.phone || ""); // Usar teléfono si existe, o string vacío
+            setPuesto(mappedPuesto);
+            
+            // Asegurarse de que el departamento cargado esté en la lista de opciones
+            if (departamentos.includes(mappedDepartamento)) {
+                setDepartamento(mappedDepartamento);
+            } else {
+                setDepartamento(departamentos[0]); // Default si no se encuentra
+            }
+
+        } catch (error) {
+            console.error("Error al cargar el perfil del usuario:", error);
+            // Mostrar un estado de error
+            setName("Error al cargar");
+            setEmail("Error al cargar");
+            setPuesto("Error al cargar");
+            setPhone("");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    loadProfile();
+  }, []);
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem("role");
+    localStorage.removeItem("userID");
+    localStorage.removeItem("userKey");
+    navigate("/");
+  };
+  
+  // Función para manejar la actualización del perfil (Lógica pendiente)
+  const handleProfileUpdate = (e: React.FormEvent) => {
+      e.preventDefault();
+      // TODO: Implementar la llamada a la API PUT /user/profile con los nuevos datos
+      alert("Guardar perfil (Lógica de API PUT pendiente)");
+  }
+
   return (
     <MainLayout contentClassName="flex flex-col gap-10">
       <header>
@@ -21,55 +103,94 @@ export default function Configuracion() {
         </p>
       </header>
 
+      {/* SECCIÓN PERFIL DE USUARIO */}
       <section className="border-2 border-black bg-white p-8">
         <h2 className="text-2xl font-semibold">Perfil de usuario</h2>
         <p className="mt-2 text-sm text-neutral-600">
           Actualiza tu información personal y mantén tus datos al día.
         </p>
-        <form className="mt-6 space-y-6">
+        <form onSubmit={handleProfileUpdate} className="mt-6 space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm font-medium">
               Nombre completo
               <input
                 type="text"
-                placeholder="Juan Pérez"
-                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]"
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                disabled={isLoading}
+                placeholder="Nombre completo"
+                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000] disabled:bg-gray-100"
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium">
               Correo electrónico
               <input
                 type="email"
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                disabled={isLoading}
                 placeholder="usuario@ejemplo.com"
-                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]"
+                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000] disabled:bg-gray-100"
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium">
               Puesto
               <input
                 type="text"
-                placeholder="Desarrollador Senior"
-                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]"
+                value={puesto} 
+                onChange={e => setPuesto(e.target.value)} 
+                disabled={isLoading}
+                placeholder="Puesto actual"
+                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000] disabled:bg-gray-100"
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium">
               Departamento
-              <select className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]">
+              <select 
+                value={departamento} 
+                onChange={e => setDepartamento(e.target.value)} 
+                disabled={isLoading}
+                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000] disabled:bg-gray-100"
+              >
                 {departamentos.map((item) => (
                   <option key={item}>{item}</option>
                 ))}
               </select>
             </label>
+            <label className="flex flex-col gap-2 text-sm font-medium">
+              Teléfono
+              <input
+                type="tel"
+                value={phone} 
+                onChange={e => setPhone(e.target.value)} 
+                disabled={isLoading}
+                placeholder="Número de teléfono (opcional)"
+                className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000] disabled:bg-gray-100"
+              />
+            </label>
           </div>
           <button
-            type="button"
-            className="border-2 border-black bg-white px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+            type="submit" 
+            disabled={isLoading}
+            className="border-2 border-black bg-white px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 disabled:opacity-50"
           >
             Guardar cambios
           </button>
         </form>
       </section>
 
+      {/* BOTÓN DE CERRAR SESIÓN */}
+        <div className="mt-8 border-t-2 border-black pt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="border-2 border-red-600 bg-red-500 text-white px-6 py-3 text-sm font-semibold transition-colors hover:bg-red-700 hover:border-red-700"
+          >
+            CERRAR SESIÓN
+          </button>
+        </div>
+
+      {/* SECCIÓN SEGURIDAD 
       <section className="border-2 border-black bg-white p-8">
         <h2 className="text-2xl font-semibold">Seguridad</h2>
         <p className="mt-2 text-sm text-neutral-600">
@@ -117,91 +238,18 @@ export default function Configuracion() {
             Habilitar autenticación de dos factores
           </label>
         </div>
-      </section>
+        
+      </section>*/}
 
+      {/* Otras secciones... 
       <section className="border-2 border-black bg-white p-8">
         <h2 className="text-2xl font-semibold">Notificaciones</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Elige cómo quieres mantenerte al tanto de los avances del equipo.
-        </p>
-        <form className="mt-6 space-y-4 text-sm">
-          <label className="flex items-center gap-3">
-            <input type="checkbox" defaultChecked className="h-5 w-5 cursor-pointer border-2 border-black" />
-            Notificaciones por correo electrónico
-          </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" defaultChecked className="h-5 w-5 cursor-pointer border-2 border-black" />
-            Notificaciones de nuevas tareas asignadas
-          </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" defaultChecked className="h-5 w-5 cursor-pointer border-2 border-black" />
-            Notificaciones de comentarios en proyectos
-          </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-5 w-5 cursor-pointer border-2 border-black" />
-            Notificaciones de cambios en el equipo
-          </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" defaultChecked className="h-5 w-5 cursor-pointer border-2 border-black" />
-            Recordatorios de fechas límite
-          </label>
-          <button
-            type="button"
-            className="mt-4 border-2 border-black bg-white px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
-          >
-            Guardar preferencias
-          </button>
-        </form>
       </section>
 
       <section className="border-2 border-black bg-white p-8">
         <h2 className="text-2xl font-semibold">Preferencias de la aplicación</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Ajusta el idioma, la zona horaria y cómo se muestra la información.
-        </p>
-        <form className="mt-6 space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm font-medium">
-              Idioma
-              <select className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]">
-                {idiomas.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium">
-              Zona horaria
-              <select className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]">
-                {zonasHorarias.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium">
-              Formato de fecha
-              <select className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]">
-                {formatosFecha.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium">
-              Tema
-              <select className="border-2 border-black bg-white px-4 py-3 text-sm outline-none transition-shadow focus:shadow-[4px_4px_0_0_#000]">
-                {temas.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <button
-            type="button"
-            className="border-2 border-black bg-white px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
-          >
-            Guardar configuración
-          </button>
-        </form>
-      </section>
+      
+      </section> */}
     </MainLayout>
   );
 }
