@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router"; // Asegúrate de tener react-router instalado
-import { MainLayout } from "../components/main-layout";
+import { useParams, Link } from "react-router-dom";
 
 import { 
   getProjects, 
   getProjectModules, 
   getModuleTasks 
 } from "../services/projectService";
+
 import type { Project, Task } from "../types/projects";
 
+// --- CONSTANTES DE DISEÑO ---
+const CUSTOM_BLUE = "#0D3B66";
+const SHADOW_BLUE = "shadow-lg shadow-[rgba(13,59,102,0.2)]";
+
 export default function ProyectoDetail() {
-  const { id } = useParams(); // Obtenemos el ID de la URL
-  
-  // ESTADOS 
+
+  const { id } = useParams<{ id: string }>();
+
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // CARGA DE DATOS
   useEffect(() => {
     if (id) loadData(id);
   }, [id]);
@@ -26,25 +29,18 @@ export default function ProyectoDetail() {
     try {
       setLoading(true);
 
-      // Obtener Info del Proyecto
-      // (Como no hay endpoint individual, traemos todos y buscamos el correcto) (Preguntar a backend si se puede crear uno)
       const allProjects = await getProjects();
       const foundProject = allProjects.find(p => p.id === projectId);
       setProject(foundProject || null);
 
       if (foundProject) {
-        // Obtener Módulos del Proyecto
         const modules = await getProjectModules(projectId);
 
-        // Obtener Tareas de CADA Módulo
-        const tasksPromises = modules.map(module => 
+        const tasksPromises = modules.map(module =>
           getModuleTasks(projectId, module.id)
         );
-        
-        // Esperamos a que todas las peticiones terminen
+
         const results = await Promise.all(tasksPromises);
-        
-        // Aplanamos el array de arrays en uno solo
         const allTasks = results.flat();
         setTasks(allTasks);
       }
@@ -56,19 +52,25 @@ export default function ProyectoDetail() {
     }
   };
 
-  // HELPERS VISUALES
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("es-ES", {
-      day: '2-digit', month: 'short', year: 'numeric'
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const getStatusLabel = (status: string) => {
-    // Ajusta estos valores según tu lógica de negocio real
     if (status === "1") return "Pendiente";
     if (status === "2") return "En Progreso";
     return "Completada";
+  };
+
+  const getStatusColorClass = (status: string) => {
+    if (status === "1") return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    if (status === "2") return "bg-blue-100 text-blue-800 border-blue-300";
+    return "bg-green-100 text-green-800 border-green-300";
   };
 
   const getPriorityLabel = (priority: string) => {
@@ -77,116 +79,170 @@ export default function ProyectoDetail() {
     return "Baja";
   };
 
+  const getPriorityColorClass = (priority: string) => {
+    if (priority === "1") return "text-red-600 font-bold";
+    if (priority === "2") return "text-orange-500 font-semibold";
+    return "text-green-500";
+  };
+
+  // --- RENDERIZADO ---
   if (loading) {
-    return(
-      <MainLayout fullWidth>
-        <div className="py-10 text-center text-lg">Cargando datos del proyecto...</div>
-      </MainLayout>
-    ) 
+    return (
+      <div className="flex min-h-screen items-center justify-center text-xl text-neutral-600">
+        Cargando datos del proyecto...
+      </div>
+    );
   }
 
   if (!project) {
-    return(
-      <MainLayout fullWidth>
-        <div className="py-10 text-center">Proyecto no encontrado.</div>
-      </MainLayout>
-    ) 
+    return (
+      <div className="flex min-h-screen items-center justify-center text-xl text-red-600">
+        Proyecto no encontrado.
+      </div>
+    );
   }
 
+  // --- RENDER PRINCIPAL ---
   return (
-    <MainLayout fullWidth>
-      <div className="max-w-6xl mx-auto px-6 py-10">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
 
-        {/* HEADER DEL PROYECTO */}
-        <div className="mb-6 flex items-center justify-between">
+      {/* NAV */}
+      <nav className="border-b-2 border-neutral-300 px-4 sm:px-10 py-4 bg-white shadow-sm flex justify-between items-center relative">
+        <Link to="/dashboard" className="text-2xl font-black tracking-tighter" style={{ color: CUSTOM_BLUE }}>
+          PMaster
+        </Link>
+
+        <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 gap-6 items-center">
+          <Link to="/proyectos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Proyectos</Link>
+          <Link to="/equipos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Equipos</Link>
+        </div>
+
+        <div>
+          <Link to="/configuracion" className="text-neutral-600 hover:text-neutral-900 font-semibold">
+            Configuración
+          </Link>
+        </div>
+      </nav>
+
+      <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-neutral-200 pb-4">
           <div>
-            <Link to="/proyectos" className="text-sm text-neutral-600 font-bold">
+            <Link 
+              to="/proyectos"
+              className="text-sm text-neutral-500 hover:text-neutral-900 font-semibold"
+            >
               ← Volver a Proyectos
             </Link>
 
-            {/* CAMBIO: mostrar nombre e ID correctamente */}
-            <h2 className="mt-2 text-4xl font-extrabold">{project.name}</h2>
-            <span className="mt-2 inline-block text-xs font-mono bg-neutral-100 px-2 py-1 border border-black">
+            <h2 className="text-4xl sm:text-5xl font-extrabold mt-1 mb-2" style={{ color: CUSTOM_BLUE }}>
+              {project.name}
+            </h2>
+
+            <span className="text-xs font-mono bg-neutral-100 px-2 py-1 border border-neutral-300 rounded text-neutral-600">
               ID: {project.id}
             </span>
           </div>
         </div>
 
-        {/* INFORMACIÓN DEL PROYECTO */}
-        <div className="mb-8 border-2 border-black p-8 bg-white shadow-[8px_8px_0_rgba(0,0,0,1)]">
-          <h3 className="mb-4 text-lg font-bold uppercase">Información General</h3>
+        {/* INFORMACIÓN GENERAL */}
+        <div
+          className={`bg-white p-6 md:p-8 mb-10 border-2 rounded-xl ${SHADOW_BLUE}`}
+          style={{ borderColor: CUSTOM_BLUE }}
+        >
+          <h3 className="text-xl font-bold uppercase mb-4 text-neutral-700 border-b border-neutral-200 pb-2">
+            Información General
+          </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Descripción</p>
-              <p className="text-base">{project.description}</p>
+          <div className="grid md:grid-cols-4 gap-6">
+
+            <div className="md:col-span-4">
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Descripción</p>
+              <p className="text-base text-neutral-800">{project.description}</p>
             </div>
+
             <div>
-              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Fecha de Inicio</p>
-              <p className="text-lg">{formatDate(project.start)}</p>
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Fecha de Inicio</p>
+              <span className="text-lg font-semibold bg-neutral-100 px-3 py-1 rounded">
+                {formatDate(project.start)}
+              </span>
             </div>
+
             <div>
-              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Fecha de Entrega</p>
-              <p className="text-lg">{formatDate(project.end)}</p>
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Fecha de Entrega</p>
+              <span className="text-lg font-semibold bg-neutral-100 px-3 py-1 rounded">
+                {formatDate(project.end)}
+              </span>
             </div>
+
           </div>
         </div>
 
         {/* LISTA DE ACTIVIDADES */}
-        <div className="border-2 border-black p-8 bg-white">
-          <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-lg font-bold uppercase">Lista de Actividades</h3>
+        <div
+          className={`bg-white p-6 md:p-8 border-2 rounded-xl`}
+          style={{ borderColor: CUSTOM_BLUE }}
+        >
+          <div className="flex justify-between items-center mb-6 border-b border-neutral-200 pb-4">
+            <h3 className="text-xl font-bold uppercase" style={{ color: CUSTOM_BLUE }}>
+              Lista de Actividades
+            </h3>
 
-            {/* CAMBIO: contar tareas correctamente */}
-            <span className="font-bold border-2 border-black px-3 py-1 rounded-full">
+            <span
+              className="font-bold border px-3 py-1 rounded-full text-sm"
+              style={{ borderColor: CUSTOM_BLUE, color: CUSTOM_BLUE }}
+            >
               {tasks.length} Tareas
             </span>
           </div>
 
           {tasks.length === 0 ? (
-            <div className="p-10 text-center border-2 border-dashed text-neutral-500">
-              No hay tareas registradas.
+            <div className="py-10 text-center border-2 border-dashed border-neutral-300 text-neutral-500 rounded-lg bg-neutral-50">
+              No hay tareas registradas en los módulos de este proyecto.
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-
-              {/* CAMBIO: renderizar con labels correctos */}
               {tasks.map((task) => (
-                <div key={task.id} className="flex justify-between items-center border-2 border-black p-4">
-                  
-                  <div>
-                    <div className="font-bold text-lg">{task.title}</div>
-                    <div className="text-sm text-neutral-600">
+                <div
+                  key={task.id}
+                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border border-neutral-200 bg-white hover:bg-neutral-50 transition-all rounded-lg shadow-sm"
+                >
+                  <div className="flex-1 mb-3 sm:mb-0">
+                    <div className="font-semibold text-lg text-neutral-800">
+                      {task.title}
+                    </div>
+                    <div className="text-sm text-neutral-500 mt-1">
                       {task.description || "Sin descripción"}
                     </div>
                   </div>
 
                   <div className="flex gap-6 items-center">
-                    
+
                     <div className="text-right">
-                      <div className="text-xs uppercase font-bold text-neutral-500">Prioridad</div>
-                      <div className="font-bold">{getPriorityLabel(task.priority)}</div>
+                      <div className="text-xs uppercase text-neutral-400">Prioridad</div>
+                      <div className={`text-sm ${getPriorityColorClass(task.priority)}`}>
+                        {getPriorityLabel(task.priority)}
+                      </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs uppercase font-bold text-neutral-500">Estado</div>
-
-                      <span className={`inline-block px-3 py-1 border 
-                        ${task.status === "3" ? "bg-black text-white" : ""}
-                      `}>
+                      <div className="text-xs uppercase text-neutral-400">Estado</div>
+                      <span
+                        className={`inline-block border text-xs font-semibold px-2 py-1 rounded-full ${getStatusColorClass(task.status)}`}
+                      >
                         {getStatusLabel(task.status)}
                       </span>
-
                     </div>
 
                   </div>
                 </div>
               ))}
-
             </div>
           )}
         </div>
+
       </div>
-    </MainLayout>
+    </div>
   );
 }

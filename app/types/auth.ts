@@ -21,3 +21,4 @@ export interface ApiError {
 export interface TokenResponse {
   token: string;
 }
+
