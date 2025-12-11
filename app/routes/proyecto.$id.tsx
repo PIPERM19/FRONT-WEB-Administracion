@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router"; // Asegúrate de tener react-router instalado
+import { MainLayout } from "../components/main-layout";
 
 import { 
   getProjects, 
@@ -77,182 +78,115 @@ export default function ProyectoDetail() {
   };
 
   if (loading) {
-    return <div style={{ padding: "40px", textAlign: "center", fontSize: "20px" }}>Cargando datos del proyecto...</div>;
+    return(
+      <MainLayout fullWidth>
+        <div className="py-10 text-center text-lg">Cargando datos del proyecto...</div>
+      </MainLayout>
+    ) 
   }
 
   if (!project) {
-    return <div style={{ padding: "40px", textAlign: "center" }}>Proyecto no encontrado.</div>;
+    return(
+      <MainLayout fullWidth>
+        <div className="py-10 text-center">Proyecto no encontrado.</div>
+      </MainLayout>
+    ) 
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#fff",
-        color: "#000",
-        fontFamily: "system-ui, sans-serif"
-      }}
-    >
-      {/* --- NAVEGACIÓN --- */}
-      <nav
-        style={{
-          borderBottom: "2px solid #000",
-          padding: "20px 40px",
-          backgroundColor: "#fff",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          position: "relative",
-        }}
-      >
-        <Link to="/dashboard" style={{ textDecoration: "none", color: "#000" }}>
-          <h1 style={{ fontSize: "24px", margin: 0, fontWeight: "900", letterSpacing: "-1px" }}>PMaster</h1>
-        </Link>
-        <div style={{ display: "flex", gap: "20px", alignItems: "center", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-          <Link to="/proyectos" style={{ color: "#000", textDecoration: "none", fontWeight: "600" }}>Proyectos</Link>
-          <Link to="/equipos" style={{ color: "#000", textDecoration: "none", fontWeight: "600" }}>Equipos</Link>
-          <Link to="/chat" style={{ color: "#000", textDecoration: "none", fontWeight: "600" }}>Chat</Link>
-        </div>
-        <div>
-          <Link to="/configuracion" style={{ color: "#000", textDecoration: "none", fontWeight: "600" }}>Configuración</Link>
-        </div>
-      </nav>
+    <MainLayout fullWidth>
+      <div className="max-w-6xl mx-auto px-6 py-10">
 
-      <div style={{ padding: "40px", maxWidth: "1200px", margin: "0 auto" }}>
-        
         {/* HEADER DEL PROYECTO */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "30px",
-          }}
-        >
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <Link to="/proyectos" style={{ fontSize: "14px", color: "#666", textDecoration: "none", marginBottom: "10px", display: "inline-block", fontWeight: "bold" }}>
+            <Link to="/proyectos" className="text-sm text-neutral-600 font-bold">
               ← Volver a Proyectos
             </Link>
-            <h2 style={{ fontSize: "42px", margin: "10px 0 0 0", fontWeight: "800" }}>{project.name}</h2>
-            <span style={{ fontSize: "12px", fontFamily: "monospace", backgroundColor: "#eee", padding: "4px 8px", border: "1px solid #000" }}>
+
+            {/* CAMBIO: mostrar nombre e ID correctamente */}
+            <h2 className="mt-2 text-4xl font-extrabold">{project.name}</h2>
+            <span className="mt-2 inline-block text-xs font-mono bg-neutral-100 px-2 py-1 border border-black">
               ID: {project.id}
             </span>
           </div>
         </div>
 
         {/* INFORMACIÓN DEL PROYECTO */}
-        <div
-          style={{
-            border: "2px solid #000",
-            padding: "30px",
-            backgroundColor: "#fff",
-            marginBottom: "40px",
-            boxShadow: "8px 8px 0px 0px rgba(0,0,0,1)"
-          }}
-        >
-          <h3 style={{ fontSize: "22px", marginBottom: "20px", fontWeight: "bold", textTransform: "uppercase" }}>
-            Información General
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            <div style={{ gridColumn: "span 2" }}>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 5px 0", textTransform: "uppercase", fontWeight: "bold" }}>
-                Descripción
-              </p>
-              <p style={{ margin: 0, fontSize: "16px" }}>{project.description}</p>
+        <div className="mb-8 border-2 border-black p-8 bg-white shadow-[8px_8px_0_rgba(0,0,0,1)]">
+          <h3 className="mb-4 text-lg font-bold uppercase">Información General</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Descripción</p>
+              <p className="text-base">{project.description}</p>
             </div>
             <div>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 5px 0", textTransform: "uppercase", fontWeight: "bold" }}>
-                Fecha de Inicio
-              </p>
-              <p style={{ margin: 0, fontSize: "18px" }}>{formatDate(project.start)}</p>
+              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Fecha de Inicio</p>
+              <p className="text-lg">{formatDate(project.start)}</p>
             </div>
             <div>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 5px 0", textTransform: "uppercase", fontWeight: "bold" }}>
-                Fecha de Entrega
-              </p>
-              <p style={{ margin: 0, fontSize: "18px" }}>{formatDate(project.end)}</p>
+              <p className="text-sm font-bold text-neutral-600 uppercase mb-1">Fecha de Entrega</p>
+              <p className="text-lg">{formatDate(project.end)}</p>
             </div>
           </div>
         </div>
 
         {/* LISTA DE ACTIVIDADES */}
-        <div
-          style={{
-            border: "2px solid #000",
-            padding: "30px",
-            backgroundColor: "#fff",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", textTransform: "uppercase" }}>
-              Lista de Actividades
-            </h3>
-            <span style={{ fontWeight: "bold", border: "2px solid #000", padding: "5px 10px", borderRadius: "20px" }}>
+        <div className="border-2 border-black p-8 bg-white">
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-lg font-bold uppercase">Lista de Actividades</h3>
+
+            {/* CAMBIO: contar tareas correctamente */}
+            <span className="font-bold border-2 border-black px-3 py-1 rounded-full">
               {tasks.length} Tareas
             </span>
           </div>
 
           {tasks.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", border: "2px dashed #ccc", color: "#888" }}>
-              No hay tareas registradas en los módulos de este proyecto.
+            <div className="p-10 text-center border-2 border-dashed text-neutral-500">
+              No hay tareas registradas.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <div className="flex flex-col gap-4">
+
+              {/* CAMBIO: renderizar con labels correctos */}
               {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    border: "2px solid #000",
-                    padding: "20px",
-                    backgroundColor: "#fff",
-                    transition: "transform 0.1s",
-                    cursor: "default"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-                >
+                <div key={task.id} className="flex justify-between items-center border-2 border-black p-4">
+                  
                   <div>
-                    <div style={{ fontWeight: "bold", fontSize: "18px", marginBottom: "5px" }}>
-                      {task.title}
-                    </div>
-                    <div style={{ fontSize: "14px", color: "#666" }}>
+                    <div className="font-bold text-lg">{task.title}</div>
+                    <div className="text-sm text-neutral-600">
                       {task.description || "Sin descripción"}
                     </div>
                   </div>
-                  
-                  <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "bold", color: "#888" }}>Prioridad</div>
-                      <div style={{ fontWeight: "bold" }}>{getPriorityLabel(task.priority)}</div>
-                    </div>
+
+                  <div className="flex gap-6 items-center">
                     
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "bold", color: "#888" }}>Estado</div>
-                      <span 
-                        style={{ 
-                          display: "inline-block",
-                          backgroundColor: task.status === "3" ? "#000" : "#fff", // Asumiendo 3 es completado
-                          color: task.status === "3" ? "#fff" : "#000",
-                          border: "1px solid #000",
-                          padding: "2px 8px",
-                          fontSize: "12px",
-                          fontWeight: "bold"
-                        }}
-                      >
+                    <div className="text-right">
+                      <div className="text-xs uppercase font-bold text-neutral-500">Prioridad</div>
+                      <div className="font-bold">{getPriorityLabel(task.priority)}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-xs uppercase font-bold text-neutral-500">Estado</div>
+
+                      <span className={`inline-block px-3 py-1 border 
+                        ${task.status === "3" ? "bg-black text-white" : ""}
+                      `}>
                         {getStatusLabel(task.status)}
                       </span>
+
                     </div>
+
                   </div>
                 </div>
               ))}
+
             </div>
           )}
         </div>
-
       </div>
-    </div>
+    </MainLayout>
   );
 }
