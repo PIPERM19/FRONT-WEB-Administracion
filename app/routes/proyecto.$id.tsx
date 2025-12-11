@@ -1,28 +1,26 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom"; // Asumo 'react-router-dom' si no usas Remix.
+import { useParams, Link } from "react-router-dom";
 
 import { 
   getProjects, 
   getProjectModules, 
   getModuleTasks 
 } from "../services/projectService";
+
 import type { Project, Task } from "../types/projects";
 
 // --- CONSTANTES DE DISEÑO ---
-const CUSTOM_BLUE = "#0D3B66"; // El color azul oscuro 
-const BORDER_CLASSES = "border-2 rounded-lg border-neutral-300";
-const SHADOW_BLUE = `shadow-lg shadow-[rgba(13,59,102,0.2)]`; // Sombra ligera basada en el azul
+const CUSTOM_BLUE = "#0D3B66";
+const SHADOW_BLUE = "shadow-lg shadow-[rgba(13,59,102,0.2)]";
 
 export default function ProyectoDetail() {
-  // NOTA: Si usas 'react-router-dom', 'useParams' devuelve un objeto { id: string }
-  const { id } = useParams<{ id: string }>(); // Obtenemos el ID de la URL
-  
-  // ESTADOS 
+
+  const { id } = useParams<{ id: string }>();
+
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // CARGA DE DATOS
   useEffect(() => {
     if (id) loadData(id);
   }, [id]);
@@ -31,24 +29,18 @@ export default function ProyectoDetail() {
     try {
       setLoading(true);
 
-      // Obtener Info del Proyecto
       const allProjects = await getProjects();
       const foundProject = allProjects.find(p => p.id === projectId);
       setProject(foundProject || null);
 
       if (foundProject) {
-        // Obtener Módulos del Proyecto
         const modules = await getProjectModules(projectId);
 
-        // Obtener Tareas de CADA Módulo
-        const tasksPromises = modules.map(module => 
+        const tasksPromises = modules.map(module =>
           getModuleTasks(projectId, module.id)
         );
-        
-        // Esperamos a que todas las peticiones terminen
+
         const results = await Promise.all(tasksPromises);
-        
-        // Aplanamos el array de arrays en uno solo
         const allTasks = results.flat();
         setTasks(allTasks);
       }
@@ -60,11 +52,12 @@ export default function ProyectoDetail() {
     }
   };
 
-  // HELPERS VISUALES
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("es-ES", {
-      day: '2-digit', month: 'short', year: 'numeric'
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
   };
 
@@ -73,30 +66,29 @@ export default function ProyectoDetail() {
     if (status === "2") return "En Progreso";
     return "Completada";
   };
-  
+
   const getStatusColorClass = (status: string) => {
-      if (status === "1") return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      if (status === "2") return "bg-blue-100 text-blue-800 border-blue-300";
-      return "bg-green-100 text-green-800 border-green-300"; // Completada
-  }
+    if (status === "1") return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    if (status === "2") return "bg-blue-100 text-blue-800 border-blue-300";
+    return "bg-green-100 text-green-800 border-green-300";
+  };
 
   const getPriorityLabel = (priority: string) => {
     if (priority === "1") return "Alta";
     if (priority === "2") return "Media";
     return "Baja";
   };
-  
+
   const getPriorityColorClass = (priority: string) => {
-      if (priority === "1") return "text-red-600 font-bold";
-      if (priority === "2") return "text-orange-500 font-semibold";
-      return "text-green-500";
-  }
+    if (priority === "1") return "text-red-600 font-bold";
+    if (priority === "2") return "text-orange-500 font-semibold";
+    return "text-green-500";
+  };
 
-  // --- RENDERIZADO CONDICIONAL ---
-
+  // --- RENDERIZADO ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-neutral-600">
+      <div className="flex min-h-screen items-center justify-center text-xl text-neutral-600">
         Cargando datos del proyecto...
       </div>
     );
@@ -104,93 +96,91 @@ export default function ProyectoDetail() {
 
   if (!project) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-red-600">
+      <div className="flex min-h-screen items-center justify-center text-xl text-red-600">
         Proyecto no encontrado.
       </div>
     );
   }
 
   // --- RENDER PRINCIPAL ---
-
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
-      
-      {/* --- NAVEGACIÓN --- */}
+
+      {/* NAV */}
       <nav className="border-b-2 border-neutral-300 px-4 sm:px-10 py-4 bg-white shadow-sm flex justify-between items-center relative">
         <Link to="/dashboard" className="text-2xl font-black tracking-tighter" style={{ color: CUSTOM_BLUE }}>
           PMaster
         </Link>
+
         <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 gap-6 items-center">
-          <Link to="/proyectos" className="text-neutral-600 hover:text-neutral-900 font-semibold transition-colors">Proyectos</Link>
-          <Link to="/equipos" className="text-neutral-600 hover:text-neutral-900 font-semibold transition-colors">Equipos</Link>
+          <Link to="/proyectos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Proyectos</Link>
+          <Link to="/equipos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Equipos</Link>
         </div>
+
         <div>
-          <Link to="/configuracion" className="text-neutral-600 hover:text-neutral-900 font-semibold transition-colors">Configuración</Link>
+          <Link to="/configuracion" className="text-neutral-600 hover:text-neutral-900 font-semibold">
+            Configuración
+          </Link>
         </div>
       </nav>
 
       <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-        
-        {/* HEADER DEL PROYECTO */}
+
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-neutral-200 pb-4">
           <div>
             <Link 
-              to="/proyectos" 
-              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors font-semibold"
+              to="/proyectos"
+              className="text-sm text-neutral-500 hover:text-neutral-900 font-semibold"
             >
-              &larr; Volver a Proyectos
+              ← Volver a Proyectos
             </Link>
+
             <h2 className="text-4xl sm:text-5xl font-extrabold mt-1 mb-2" style={{ color: CUSTOM_BLUE }}>
               {project.name}
             </h2>
+
             <span className="text-xs font-mono bg-neutral-100 px-2 py-1 border border-neutral-300 rounded text-neutral-600">
               ID: {project.id}
             </span>
           </div>
         </div>
 
-        {/* INFORMACIÓN DEL PROYECTO */}
-        <div 
+        {/* INFORMACIÓN GENERAL */}
+        <div
           className={`bg-white p-6 md:p-8 mb-10 border-2 rounded-xl ${SHADOW_BLUE}`}
           style={{ borderColor: CUSTOM_BLUE }}
         >
           <h3 className="text-xl font-bold uppercase mb-4 text-neutral-700 border-b border-neutral-200 pb-2">
             Información General
           </h3>
+
           <div className="grid md:grid-cols-4 gap-6">
-            
-            {/* Descripción */}
+
             <div className="md:col-span-4">
-              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">
-                Descripción
-              </p>
-              <p className="text-base text-neutral-800 leading-relaxed">{project.description}</p>
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Descripción</p>
+              <p className="text-base text-neutral-800">{project.description}</p>
             </div>
-            
-            {/* Fecha de Inicio */}
-            <div className="md:col-span-2">
-              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">
-                Fecha de Inicio
-              </p>
-              <span className="text-lg font-semibold text-neutral-900 bg-neutral-100 px-3 py-1 rounded">
+
+            <div>
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Fecha de Inicio</p>
+              <span className="text-lg font-semibold bg-neutral-100 px-3 py-1 rounded">
                 {formatDate(project.start)}
               </span>
             </div>
-            
-            {/* Fecha de Entrega */}
-            <div className="md:col-span-2">
-              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">
-                Fecha de Entrega
-              </p>
-              <span className="text-lg font-semibold text-neutral-900 bg-neutral-100 px-3 py-1 rounded">
+
+            <div>
+              <p className="text-xs text-neutral-500 uppercase font-bold mb-1">Fecha de Entrega</p>
+              <span className="text-lg font-semibold bg-neutral-100 px-3 py-1 rounded">
                 {formatDate(project.end)}
               </span>
             </div>
+
           </div>
         </div>
 
         {/* LISTA DE ACTIVIDADES */}
-        <div 
+        <div
           className={`bg-white p-6 md:p-8 border-2 rounded-xl`}
           style={{ borderColor: CUSTOM_BLUE }}
         >
@@ -198,8 +188,9 @@ export default function ProyectoDetail() {
             <h3 className="text-xl font-bold uppercase" style={{ color: CUSTOM_BLUE }}>
               Lista de Actividades
             </h3>
-            <span 
-              className={`font-bold border px-3 py-1 rounded-full text-sm`} 
+
+            <span
+              className="font-bold border px-3 py-1 rounded-full text-sm"
               style={{ borderColor: CUSTOM_BLUE, color: CUSTOM_BLUE }}
             >
               {tasks.length} Tareas
@@ -215,36 +206,35 @@ export default function ProyectoDetail() {
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  // Usamos un diseño más limpio para la tarjeta de tarea
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border border-neutral-200 bg-white hover:bg-neutral-50 transition-all rounded-lg shadow-sm"
                 >
-                  <div className="flex-1 min-w-0 mb-3 sm:mb-0">
-                    <div className="font-semibold text-lg text-neutral-800 truncate">
+                  <div className="flex-1 mb-3 sm:mb-0">
+                    <div className="font-semibold text-lg text-neutral-800">
                       {task.title}
                     </div>
-                    <div className="text-sm text-neutral-500 mt-1 line-clamp-1">
+                    <div className="text-sm text-neutral-500 mt-1">
                       {task.description || "Sin descripción"}
                     </div>
                   </div>
-                  
-                  <div className="flex gap-4 items-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-100 sm:border-none w-full sm:w-auto justify-end">
-                    {/* Prioridad */}
+
+                  <div className="flex gap-6 items-center">
+
                     <div className="text-right">
-                      <div className="text-xs uppercase font-medium text-neutral-400">Prioridad</div>
+                      <div className="text-xs uppercase text-neutral-400">Prioridad</div>
                       <div className={`text-sm ${getPriorityColorClass(task.priority)}`}>
                         {getPriorityLabel(task.priority)}
                       </div>
                     </div>
-                    
-                    {/* Estado */}
+
                     <div className="text-right">
-                      <div className="text-xs uppercase font-medium text-neutral-400">Estado</div>
-                      <span 
-                        className={`inline-block border text-xs font-semibold px-2 py-0.5 rounded-full ${getStatusColorClass(task.status)}`}
+                      <div className="text-xs uppercase text-neutral-400">Estado</div>
+                      <span
+                        className={`inline-block border text-xs font-semibold px-2 py-1 rounded-full ${getStatusColorClass(task.status)}`}
                       >
                         {getStatusLabel(task.status)}
                       </span>
                     </div>
+
                   </div>
                 </div>
               ))}
