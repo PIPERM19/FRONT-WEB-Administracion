@@ -104,7 +104,7 @@ export function MainLayout({
           </div>
 
           {/* Avatar + Nombre */}
-          <Link to="/perfil" className="relative flex items-center gap-3" title={`${style.label} · ${displayName}`}>
+          <Link to="/configuracion" className="relative flex items-center gap-3" title={`${style.label} · ${displayName}`}>
             <div className={`relative ${style.ring} rounded-full w-10 h-10 flex items-center justify-center overflow-hidden`}>
               {avatarUrl ? (
                 <img src={avatarUrl} alt={String(displayName)} className="w-full h-full object-cover" />
@@ -122,7 +122,7 @@ export function MainLayout({
               </span>
             </div>
 
-            <span className={getLinkClasses(location.pathname === "/perfil")}>{displayName}</span>
+            <span className={getLinkClasses(location.pathname === "/configuracion")}>{displayName}</span>
           </Link>
         </nav>
       </header>

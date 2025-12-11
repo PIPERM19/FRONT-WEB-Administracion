@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { MainLayout } from "../components/main-layout";
 
 import { 
   getProjects, 
@@ -88,42 +89,23 @@ export default function ProyectoDetail() {
   // --- RENDERIZADO ---
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-xl text-neutral-600">
-        Cargando datos del proyecto...
-      </div>
+      <MainLayout fullWidth>
+        <div className="py-10 text-center text-lg">Cargando datos del proyecto...</div>
+      </MainLayout>
     );
   }
 
   if (!project) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-xl text-red-600">
-        Proyecto no encontrado.
-      </div>
+      <MainLayout fullWidth>
+        <div className="py-10 text-center">Proyecto no encontrado.</div>
+      </MainLayout>
     );
   }
 
   // --- RENDER PRINCIPAL ---
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
-
-      {/* NAV */}
-      <nav className="border-b-2 border-neutral-300 px-4 sm:px-10 py-4 bg-white shadow-sm flex justify-between items-center relative">
-        <Link to="/dashboard" className="text-2xl font-black tracking-tighter" style={{ color: CUSTOM_BLUE }}>
-          PMaster
-        </Link>
-
-        <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 gap-6 items-center">
-          <Link to="/proyectos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Proyectos</Link>
-          <Link to="/equipos" className="text-neutral-600 hover:text-neutral-900 font-semibold">Equipos</Link>
-        </div>
-
-        <div>
-          <Link to="/configuracion" className="text-neutral-600 hover:text-neutral-900 font-semibold">
-            Configuración
-          </Link>
-        </div>
-      </nav>
-
+    <MainLayout fullWidth>
       <div className="p-4 sm:p-8 max-w-7xl mx-auto">
 
         {/* HEADER */}
@@ -243,6 +225,6 @@ export default function ProyectoDetail() {
         </div>
 
       </div>
-    </div>
+    </MainLayout>
   );
 }
