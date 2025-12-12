@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { MainLayout } from "../components/main-layout";
-// Importamos servicios y tipos
+
 import { 
   getProjects, 
   getProjectTeams, 
   createProjectTeam 
 } from "../services/projectService";
 import type { Team, Project } from "../types/projects";
+
+// ESTILOS CONSTANTES
+const CUSTOM_BLUE = "#0D3B66";
+const BORDER_CLASS = "border rounded-lg shadow-sm";
 
 // Extendemos el tipo Team para incluir contexto del proyecto
 interface TeamWithContext extends Team {
@@ -16,10 +20,10 @@ interface TeamWithContext extends Team {
 }
 
 export default function Equipos() {
-  //  ESTADOS
+  // ESTADOS
   const [role, setRole] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamWithContext[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]); // Necesario para el select del modal
+  const [projects, setProjects] = useState<Project[]>([]); 
   const [loading, setLoading] = useState(true);
 
   // ESTADOS VISUALES
@@ -31,7 +35,7 @@ export default function Equipos() {
   const [newTeamDesc, setNewTeamDesc] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
-  // CARGA INICIAL DE DATOS
+  // CARGA INICIAL
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
     setRole(storedRole);
@@ -41,27 +45,23 @@ export default function Equipos() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Traer todos los proyectos
       const allProjects = await getProjects();
       setProjects(allProjects);
 
-      // Traer los equipos de CADA proyecto (en paralelo)
       const teamsPromises = allProjects.map(async (proj) => {
         try {
           const projTeams = await getProjectTeams(proj.id);
-          // Agregamos el nombre del proyecto a cada equipo para mostrarlo en la tarjeta
           return projTeams.map(t => ({
             ...t,
             projectName: proj.name,
-            projectId: proj.id
+            projectId: proj.id 
           }));
         } catch (e) {
-          return []; // Si falla un proyecto, retornamos array vacío para no romper todo
+          return [];
         }
       });
 
       const results = await Promise.all(teamsPromises);
-      // Aplanamos el array de arrays
       setTeams(results.flat());
 
     } catch (error) {
@@ -84,9 +84,8 @@ export default function Equipos() {
       
       setShowCreateModal(false);
       alert("Equipo creado correctamente");
-      loadData(); // Recargar la lista
+      loadData(); 
 
-      // Resetear form
       setNewTeamName("");
       setNewTeamDesc("");
       setSelectedProjectId("");
@@ -96,18 +95,18 @@ export default function Equipos() {
     }
   };
 
-  // Permisos: Solo Admin (0) y Manager (1) pueden editar
   const canEdit = role === "0" || role === "1";
 
   return (
-    <MainLayout contentClassName="flex flex-col gap-10 relative">
-      <header className="flex items-center justify-between gap-6">
+    <MainLayout fullWidth contentClassName="flex flex-col gap-10 relative p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-gray-200 pb-6">
         <div>
-          <h1 className="text-3xl font-semibold">Equipos</h1>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h1 className="text-3xl font-extrabold text-gray-900">Equipos</h1>
+          <p className="mt-1 text-sm text-gray-500">
             {canEdit 
-             ? "Gestiona los equipos asignados a cada proyecto." 
-             : "Visualiza los equipos de trabajo activos."}
+              ? "Gestiona los equipos asignados a cada proyecto." 
+              : "Visualiza los equipos de trabajo activos."}
           </p>
         </div>
         
@@ -117,24 +116,23 @@ export default function Equipos() {
             <button
               type="button"
               onClick={() => setShowActionsMenu((state) => !state)}
-              className="border-2 border-black bg-white px-6 py-3 text-sm font-semibold transition-colors hover:bg-black hover:text-white"
+              className="px-6 py-3 text-sm font-bold text-white transition-all shadow-md rounded-lg hover:shadow-lg hover:-translate-y-0.5"
+              style={{ backgroundColor: CUSTOM_BLUE }}
             >
               Acciones ▼
             </button>
             {showActionsMenu && (
-              <div className="absolute right-0 top-full mt-2 w-64 border-2 border-black bg-white shadow-lg z-10">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white shadow-xl z-10 rounded-lg border border-gray-100 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => {
                     setShowActionsMenu(false);
                     setShowCreateModal(true);
                   }}
-                  className="flex w-full items-center justify-between border-b-2 border-black px-4 py-3 text-left text-sm font-medium hover:bg-neutral-100"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Crear nuevo equipo
                 </button>
-                {/* Nota: La API actual no tiene endpoint directo para añadir miembros a un EQUIPO, 
-                    solo a un PROYECTO. Es necesario que backend implemente esta funcionalidad */}
               </div>
             )}
           </div>
@@ -143,32 +141,39 @@ export default function Equipos() {
 
       {/* LISTA DE EQUIPOS */}
       {loading ? (
-        <div className="text-center py-10">Cargando equipos...</div>
+        <div className="flex justify-center items-center py-20">
+            <div className="text-gray-400 font-medium animate-pulse">Cargando equipos...</div>
+        </div>
       ) : teams.length === 0 ? (
-        <div className="py-12 text-center border-2 border-dashed border-gray-300 text-neutral-500">
-          No se encontraron equipos registrados.
+        <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-lg text-gray-400 bg-white">
+          <p>No se encontraron equipos registrados.</p>
         </div>
       ) : (
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
             <Link
-              key={`${team.projectId}-${team.id}`} // Key compuesta única
+              key={`${team.projectId}-${team.id}`} 
               to={`/equipo/${team.id}`}
-              className="flex flex-col border-2 border-black bg-white p-6 transition-transform hover:-translate-y-1 hover:shadow-md"
+              className={`group flex flex-col bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg ${BORDER_CLASS} border-gray-200 hover:border-blue-200`}
             >
-              <h2 className="text-xl font-semibold">{team.name}</h2>
-              <p className="mt-2 text-sm text-neutral-600 flex-grow">{team.description}</p>
+              {/* HEADER DE LA TARJETA */}
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-900 transition-colors">{team.name}</h2>
+                {/* ID ELIMINADO AQUÍ */}
+              </div>
               
-              <dl className="mt-4 space-y-2 text-xs border-t border-gray-100 pt-3">
-                <div className="flex items-center justify-between">
-                  <dt className="font-semibold uppercase text-neutral-500">Proyecto</dt>
-                  <dd className="font-bold text-black truncate max-w-[150px]">{team.projectName}</dd>
+              <p className="text-sm text-gray-600 flex-grow line-clamp-3 mb-4 leading-relaxed">
+                  {team.description}
+              </p>
+              
+              <div className="mt-auto pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-gray-400 uppercase tracking-wider">Proyecto</span>
+                  <span className="font-semibold text-blue-900 truncate max-w-[150px] bg-blue-50 px-2 py-1 rounded">
+                    {team.projectName}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <dt className="font-semibold uppercase text-neutral-500">ID Equipo</dt>
-                  <dd className="font-mono bg-gray-100 px-1">{team.id}</dd>
-                </div>
-              </dl>
+              </div>
             </Link>
           ))}
         </section>
@@ -177,14 +182,16 @@ export default function Equipos() {
       {/* MODAL CREAR EQUIPO */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <form onSubmit={handleCreateTeam} className="w-full max-w-lg border-4 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-6 text-2xl font-bold uppercase">Nuevo Equipo</h2>
+          <form onSubmit={handleCreateTeam} 
+            className={`w-full max-w-lg bg-white p-8 shadow-2xl rounded-xl border border-gray-200`}
+          >
+            <h2 className="mb-6 text-2xl font-bold text-gray-800 border-b pb-4">Nuevo Equipo</h2>
             
-            <div className="mb-4">
-              <label className="block font-bold mb-2">Asignar a Proyecto</label>
-              <p className="text-xs text-gray-500 mb-2">Un equipo debe pertenecer a un proyecto.</p>
+            <div className="mb-5">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Asignar a Proyecto</label>
+              <p className="text-xs text-gray-500 mb-2">Selecciona el proyecto al que pertenecerá este equipo.</p>
               <select 
-                className="w-full border-2 border-black p-3 bg-white"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none bg-white transition-shadow"
                 value={selectedProjectId}
                 onChange={e => setSelectedProjectId(e.target.value)}
                 required
@@ -196,10 +203,10 @@ export default function Equipos() {
               </select>
             </div>
 
-            <div className="mb-4">
-              <label className="block font-bold mb-2">Nombre del Equipo</label>
+            <div className="mb-5">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Nombre del Equipo</label>
               <input 
-                className="w-full border-2 border-black p-3" 
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none transition-shadow" 
                 value={newTeamName} 
                 onChange={e => setNewTeamName(e.target.value)} 
                 required 
@@ -207,21 +214,33 @@ export default function Equipos() {
               />
             </div>
             
-            <div className="mb-6">
-              <label className="block font-bold mb-2">Descripción</label>
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Descripción</label>
               <textarea 
-                className="w-full border-2 border-black p-3" 
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none transition-shadow" 
                 rows={3} 
                 value={newTeamDesc} 
                 onChange={e => setNewTeamDesc(e.target.value)} 
                 required 
-                placeholder="Funciones principales del equipo..."
+                placeholder="Describe las responsabilidades principales..."
               />
             </div>
 
             <div className="flex gap-4">
-              <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 border-2 border-black py-3 font-bold hover:bg-neutral-200">CANCELAR</button>
-              <button type="submit" className="flex-1 border-2 border-black bg-black py-3 text-white font-bold hover:bg-white hover:text-black">GUARDAR</button>
+              <button 
+                type="button" 
+                onClick={() => setShowCreateModal(false)} 
+                className="flex-1 py-3 font-bold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                CANCELAR
+              </button>
+              <button 
+                type="submit" 
+                className="flex-1 py-3 font-bold text-white rounded-lg hover:opacity-90 transition-opacity shadow-md"
+                style={{ backgroundColor: CUSTOM_BLUE }}
+              >
+                GUARDAR
+              </button>
             </div>
           </form>
         </div>
