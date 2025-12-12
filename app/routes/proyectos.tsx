@@ -7,17 +7,17 @@ import {
   createProject, 
   getProjectModules, 
   createTask,
+  createProjectModule, 
   removeProyect
 } from "../services/projectService";
 import type { Project, Module } from "../types/projects";
 
-// --- CONSTANTES DE DISEÑO (Adaptadas al estilo solicitado: Azul oscuro y bordes sólidos) ---
-const CUSTOM_BLUE = "#0D3B66"; // El color azul oscuro 
-const RED_COLOR = "#dc2626"; // Rojo para la acción de eliminar
+// --- CONSTANTES DE DISEÑO ---
+const CUSTOM_BLUE = "#0D3B66"; 
+const RED_COLOR = "#dc2626"; 
 const BORDER_CLASS = "border-2 rounded-lg";
 
-// Usamos clases dinámicas de Tailwind JIT para asegurar que el foco funcione correctamente
-// Nota: La sintaxis [${COLOR}] solo funciona si Tailwind puede pre-analizar el valor.
+// Clases utilitarias
 const INPUT_CLASSES = `w-full border-2 border-neutral-300 p-3 rounded-lg focus:outline-none focus:border-[${CUSTOM_BLUE}] transition-colors`;
 
 const BLUE_BUTTON_STYLE = { backgroundColor: CUSTOM_BLUE, borderColor: CUSTOM_BLUE, color: 'white' };
@@ -38,6 +38,7 @@ export default function Proyectos() {
 
   // Modales
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showModuleModal, setShowModuleModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
 
@@ -47,12 +48,22 @@ export default function Proyectos() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Formulario: Tarea / Eliminación
+  // Formulario: Módulo
+  const [newModuleTitle, setNewModuleTitle] = useState("");
+  const [newModuleDesc, setNewModuleDesc] = useState("");
+
+  // Formulario: Tarea (Con Prioridad y Estado)
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [availableModules, setAvailableModules] = useState<Module[]>([]);
+  
+  // ESTADOS DE PRIORIDAD Y ESTADO
+  const [taskPriority, setTaskPriority] = useState("1"); 
+  const [taskStatus, setTaskStatus] = useState("1");     
+  
+  // Eliminación
   const [projectToDelete, setProjectToDelete] = useState<string>("");
 
   // --- EFECTOS ---
@@ -98,8 +109,8 @@ export default function Proyectos() {
       await createProject({
         name: newProjectName,
         description: newProjectDesc,
-        client_id: 2,           // Estático según requerimiento
-        team_leader_id: userId, // Usuario actual
+        client_id: 2,           
+        team_leader_id: userId, 
         start: new Date(startDate).toISOString(),
         end: new Date(endDate).toISOString(), 
       });
@@ -108,7 +119,6 @@ export default function Proyectos() {
       loadProjects(); 
       alert("Proyecto creado con éxito");
       
-      // Reset form
       setNewProjectName("");
       setNewProjectDesc("");
       setStartDate("");
@@ -119,7 +129,34 @@ export default function Proyectos() {
     }
   };
 
-  // 2. Crear Tarea
+  // 2. Crear Módulo
+  const handleCreateModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProjectId) {
+      alert("Selecciona un proyecto primero");
+      return;
+    }
+
+    try {
+      await createProjectModule(
+        selectedProjectId,
+        newModuleTitle,
+        newModuleDesc,
+        "1", 
+        "1"  
+      );
+      setShowModuleModal(false);
+      alert("Módulo creado con éxito");
+      
+      setNewModuleTitle("");
+      setNewModuleDesc("");
+      setSelectedProjectId("");
+    } catch (error) {
+      alert("Error al crear módulo");
+    }
+  };
+
+  // 3. Crear Tarea (Con Prioridad y Estado)
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProjectId || !selectedModuleId) {
@@ -133,26 +170,35 @@ export default function Proyectos() {
         selectedModuleId,
         taskTitle,
         taskDesc,
-        "1", "1", userId || undefined 
+        taskPriority, 
+        taskStatus,   
+        userId || undefined 
       );
       setShowTaskModal(false);
       alert("Tarea creada con éxito");
+      
       setTaskTitle("");
       setTaskDesc("");
+      setTaskPriority("1");
+      setTaskStatus("1");
+      setSelectedProjectId(""); 
     } catch (error) {
       alert("Error al crear tarea");
     }
   };
 
-  // 3. Eliminar Proyecto
+  // 4. Eliminar Proyecto
   const handleDeleteProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectToDelete) {
       alert("Selecciona un proyecto para eliminar");
       return;
     }
+    
+    if (!confirm("¿Estás seguro? Se borrará TODO el contenido del proyecto.")) return;
+
     try {
-      await removeProyect(projectToDelete);
+      await removeProyect(projectToDelete); 
       setShowDeleteProjectModal(false);
       loadProjects();
       alert("Proyecto eliminado con éxito");
@@ -191,7 +237,7 @@ export default function Proyectos() {
           </p>
         </div>
         
-        {/* BOTÓN DE ACCIONES (DROPDOWN) */}
+        {/* BOTÓN DE ACCIONES */}
         {canEdit && (
           <div className="relative">
             <button
@@ -199,14 +245,10 @@ export default function Proyectos() {
               onClick={() => setShowActionsMenu((state) => !state)}
               className={`px-6 py-3 text-sm font-semibold transition-colors rounded-lg shadow-md ${BORDER_CLASS}`}
               style={showActionsMenu ? HOVER_BLUE_BUTTON_STYLE : BLUE_BUTTON_STYLE}
-              onMouseEnter={(e) => e.currentTarget.style.cssText = `background-color: white; color: ${CUSTOM_BLUE}; border-color: ${CUSTOM_BLUE}; border-width: 2px; border-radius: 0.5rem;`}
-              onMouseLeave={(e) => {
-                if (!showActionsMenu) {
-                  e.currentTarget.style.cssText = `background-color: ${CUSTOM_BLUE}; color: white; border-color: ${CUSTOM_BLUE}; border-width: 2px; border-radius: 0.5rem;`;
-                }
-              }}
+              onMouseEnter={(e) => Object.assign(e.currentTarget.style, HOVER_BLUE_BUTTON_STYLE)}
+              onMouseLeave={(e) => !showActionsMenu && Object.assign(e.currentTarget.style, BLUE_BUTTON_STYLE)}
             >
-              ACCIONES
+              ACCIONES ▼
             </button>
             
             {showActionsMenu && (
@@ -218,6 +260,14 @@ export default function Proyectos() {
                   style={{ color: CUSTOM_BLUE }}
                 >
                   Crear nuevo proyecto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowActionsMenu(false); setShowModuleModal(true); }} 
+                  className={`w-full px-4 py-3 text-left text-sm font-medium hover:bg-neutral-50 border-b border-neutral-100 transition-colors`}
+                  style={{ color: CUSTOM_BLUE }}
+                >
+                  Crear nuevo módulo
                 </button>
                 <button
                   type="button"
@@ -240,8 +290,6 @@ export default function Proyectos() {
         )}
       </header>
 
-      ***
-
       {/* GRID DE PROYECTOS */}
       {projects.length === 0 ? (
           <div className={`py-16 text-center border-2 border-dashed border-neutral-300 text-neutral-500 rounded-xl bg-neutral-50`}>
@@ -260,12 +308,8 @@ export default function Proyectos() {
                 <h2 className={`text-xl font-bold truncate pr-2`} style={{ color: CUSTOM_BLUE }}>
                   {project.name}
                 </h2>
-                <span className="text-[10px] font-mono border px-2 py-0.5 bg-neutral-100 rounded text-neutral-500" style={{ borderColor: CUSTOM_BLUE }}>
-                  #{project.id}
-                </span>
               </div>
               
-              {/* Corregida sugerencia de 'flex-grow' a 'grow' */}
               <p className="mt-1 text-sm text-neutral-600 line-clamp-3 mb-6 leading-relaxed grow"> 
                 {project.description}
               </p>
@@ -333,7 +377,48 @@ export default function Proyectos() {
         </div>
       )}
 
-      {/* 2. MODAL CREAR TAREA */}
+      {/* 2. MODAL CREAR MÓDULO */}
+      {showModuleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <form onSubmit={handleCreateModule} className={MODAL_CONTAINER_CLASSES} style={{ borderColor: CUSTOM_BLUE }}>
+            <h2 className={`mb-6 text-2xl font-bold border-b pb-2`} style={{ color: CUSTOM_BLUE, borderColor: CUSTOM_BLUE }}>
+              Nuevo Módulo
+            </h2>
+            
+            <div className="mb-4">
+              <label className="block font-semibold mb-1 text-sm text-neutral-700">Proyecto</label>
+              <select className={`${INPUT_CLASSES} bg-white`} value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} required>
+                <option value="">-- Selecciona un proyecto --</option>
+                {projects.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block font-semibold mb-1 text-sm text-neutral-700">Título del Módulo</label>
+              <input className={INPUT_CLASSES} value={newModuleTitle} onChange={e => setNewModuleTitle(e.target.value)} required placeholder="Ej: Backend, Sprint 1..." />
+            </div>
+            
+            <div className="mb-8">
+              <label className="block font-semibold mb-1 text-sm text-neutral-700">Descripción</label>
+              <textarea className={INPUT_CLASSES} rows={2} value={newModuleDesc} onChange={e => setNewModuleDesc(e.target.value)} required placeholder="Objetivo del módulo..." />
+            </div>
+
+            <div className="flex gap-4">
+              <button type="button" onClick={() => setShowModuleModal(false)} className={CANCEL_BUTTON_CLASSES}>CANCELAR</button>
+              <button type="submit" 
+                className={`flex-1 ${BORDER_CLASS} py-3 font-bold transition-colors`} 
+                style={BLUE_BUTTON_STYLE} 
+                onMouseEnter={(e) => Object.assign(e.currentTarget.style, HOVER_BLUE_BUTTON_STYLE)}
+                onMouseLeave={(e) => Object.assign(e.currentTarget.style, BLUE_BUTTON_STYLE)}
+              >
+                CREAR MÓDULO
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 3. MODAL CREAR TAREA (CON SELECTORES DE ESTADO Y PRIORIDAD) */}
       {showTaskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <form onSubmit={handleCreateTask} className={MODAL_CONTAINER_CLASSES} style={{ borderColor: CUSTOM_BLUE }}>
@@ -362,9 +447,27 @@ export default function Proyectos() {
               <input className={INPUT_CLASSES} value={taskTitle} onChange={e => setTaskTitle(e.target.value)} required placeholder="Ej: Crear base de datos..." />
             </div>
             
-            <div className="mb-8">
+            <div className="mb-4">
               <label className="block font-semibold mb-1 text-sm text-neutral-700">Descripción (Opcional)</label>
               <textarea className={INPUT_CLASSES} rows={2} value={taskDesc} onChange={e => setTaskDesc(e.target.value)} placeholder="Detalles técnicos..." />
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div>
+                <label className="block font-semibold mb-1 text-sm text-neutral-700">Prioridad</label>
+                <select className={`${INPUT_CLASSES} bg-white`} value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)}>
+                  <option value="1">Alta</option>
+                  <option value="2">Media</option>
+                  <option value="3">Baja</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-sm text-neutral-700">Estado</label>
+                <select className={`${INPUT_CLASSES} bg-white`} value={taskStatus} onChange={(e) => setTaskStatus(e.target.value)}>
+                  <option value="1">Pendiente</option>
+                  <option value="2">En Progreso</option>
+                  <option value="3">Completada</option>
+                </select>
+              </div>
             </div>
             
             <div className="flex gap-4">
@@ -382,7 +485,7 @@ export default function Proyectos() {
         </div>
       )}
 
-      {/* 3. MODAL ELIMINAR PROYECTO */}
+      {/* 4. MODAL ELIMINAR PROYECTO */}
       {showDeleteProjectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <form onSubmit={handleDeleteProject} className={MODAL_CONTAINER_CLASSES} style={{ borderColor: RED_COLOR }}>
